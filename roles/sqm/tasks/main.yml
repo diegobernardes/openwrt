@@ -1,0 +1,21 @@
+---
+- name: Install SQM packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - sqm-scripts
+      - luci-app-sqm
+
+- name: Apply SQM config
+  ansible.builtin.template:
+    src: sqm.j2
+    dest: /etc/config/sqm
+    mode: "0644"
+  notify: restart sqm
+
+- name: Enable SQM service
+  ansible.builtin.service:
+    name: sqm
+    enabled: true
+    state: started
+  changed_when: false

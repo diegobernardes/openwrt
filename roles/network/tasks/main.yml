@@ -1,0 +1,61 @@
+---
+- name: Apply network config
+  ansible.builtin.template:
+    src: network.j2
+    dest: /etc/config/network
+    mode: "0644"
+  register: network_config
+
+- name: Install UDP GRO hotplug script
+  ansible.builtin.template:
+    src: udp-gro-hotplug.j2
+    dest: /etc/hotplug.d/net/20-udp-gro
+    mode: "0755"
+
+- name: Install trunk carrier-detect init script
+  ansible.builtin.template:
+    src: trunk-carrier-detect.j2
+    dest: /etc/init.d/trunk-carrier-detect
+    mode: "0755"
+  notify: restart trunk-carrier-detect
+
+- name: Enable trunk carrier-detect service
+  ansible.builtin.service:
+    name: trunk-carrier-detect
+    enabled: true
+
+- name: Reboot if network config changed # noqa: no-handler
+  when: network_config.changed
+  block:
+    # Here the 'ansible.builtin.reboot' cannot be used because the router could change its IP when moving from
+    # factory settings. The reboot command would wait at the same IP.
+    - name: Trigger reboot
+      ansible.builtin.command: /sbin/reboot
+      async: 1
+      poll: 0
+      changed_when: true
+      failed_when: false
+
+    - name: Wait for SSH to go down
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        state: stopped
+        timeout: 60
+      delegate_to: localhost
+
+    - name: Switch to configured router IP
+      ansible.builtin.set_fact:
+        ansible_host: "{{ hostvars['router'].ansible_host }}"
+
+    - name: Wait for router to come back at configured IP
+      ansible.builtin.wait_for:
+        host: "{{ ansible_host }}"
+        port: 22
+        timeout: 300
+        state: started
+      delegate_to: localhost
+
+- name: Reset SSH connection # noqa: no-handler
+  ansible.builtin.meta: reset_connection
+  when: network_config.changed

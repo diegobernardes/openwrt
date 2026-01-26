@@ -1,0 +1,6 @@
+config mount 'root'
+	option target '/'
+	option device '{{ storage_root_device.stdout }}'
+	option fstype 'ext4'
+	option options 'noatime,nodiratime,errors=remount-ro,discard'
+	option enabled '1'

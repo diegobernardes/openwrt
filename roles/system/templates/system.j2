@@ -1,0 +1,33 @@
+config system
+	option hostname '{{ system_hostname }}'
+	option timezone '{{ system_timezone }}'
+	option zonename '{{ system_zonename }}'
+	option log_size '65536'
+	option log_type 'circular'
+
+config led 'led_power'
+	option name 'Power'
+	option sysfs 'red:power'
+	option trigger 'none'
+	option default '1'
+
+config led 'led_wan'
+	option name 'WAN'
+	option sysfs 'green:wan'
+	option trigger 'netdev'
+	option dev '{{ network_interfaces.wan }}'
+	option mode 'link tx rx'
+
+config led 'led_lan1'
+	option name 'LAN1'
+	option sysfs 'green:lan-1'
+	option trigger 'netdev'
+	option dev '{{ network_interfaces.lan_trunk }}'
+	option mode 'link tx rx'
+
+config led 'led_lan2'
+	option name 'LAN2'
+	option sysfs 'green:lan-2'
+	option trigger 'netdev'
+	option dev '{{ network_interfaces.mgmt }}'
+	option mode 'link tx rx'

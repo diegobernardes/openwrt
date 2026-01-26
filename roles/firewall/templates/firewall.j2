@@ -1,0 +1,352 @@
+config defaults
+	option syn_flood '1'
+	option input 'DROP'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+	option drop_invalid '1'
+	option rpfilter '1'
+
+# =============================================================================
+# ZONES
+# =============================================================================
+config zone
+	option name 'wan'
+	option input 'DROP'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+	option masq '1'
+	option mtu_fix '1'
+	option log '1'
+	option log_limit '10/min'
+	list network 'wan'
+	list network 'wan6'
+
+{% for vlan in network_vlans %}
+config zone
+	option name '{{ vlan.name }}'
+	option input '{{ vlan.firewall.input | upper }}'
+	option output 'ACCEPT'
+	option forward '{{ vlan.firewall.forward | upper }}'
+	list network '{{ vlan.name }}'
+{% if vlan.firewall.masq | default(false) %}
+	option masq '1'
+{% endif %}
+
+{% endfor %}
+# =============================================================================
+# ZONE FORWARDING RULES
+# =============================================================================
+{% for vlan in network_vlans %}
+{% for dest in vlan.firewall.forward_to %}
+config forwarding
+	option src '{{ vlan.name }}'
+	option dest '{{ dest }}'
+
+{% endfor %}
+{% endfor %}
+# =============================================================================
+# ROUTER ACCESS RULES
+# Controls which zones can access the router itself
+# Zones with input=accept get full access via zone config
+# Zones with input=reject get explicit per-service rules below
+# =============================================================================
+{% set service_rules = {
+    'dhcp': {'port': '67', 'proto': 'udp', 'limit': '10/sec'},
+    'dns': {'port': '53', 'proto': 'tcp udp', 'limit': '200/sec'},
+    'icmp': {'proto': 'icmp', 'limit': '100/sec'},
+    'ntp': {'port': '123', 'proto': 'udp', 'limit': '10/sec'},
+    'https': {'port': '443', 'proto': 'tcp', 'limit': '50/sec'},
+    'ssh': {'port': '22', 'proto': 'tcp', 'limit': '10/sec'},
+} %}
+{% for vlan in network_vlans %}
+{% if vlan.firewall.router_services is defined %}
+{% for svc in vlan.firewall.router_services %}
+{% set rule = service_rules[svc] %}
+config rule
+	option name '{{ vlan.name }}-to-router-{{ svc }}'
+	option src '{{ vlan.name }}'
+{% if rule.port is defined %}
+	option dest_port '{{ rule.port }}'
+{% endif %}
+	option proto '{{ rule.proto }}'
+	option target 'ACCEPT'
+{% if rule.limit is defined %}
+	option limit '{{ rule.limit }}'
+{% endif %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+# =============================================================================
+# mDNS RULES
+# Allow mDNS (UDP 5353) for Avahi reflector to work across VLANs
+# Only enabled for VLANs listed in firewall_mdns_vlans
+# =============================================================================
+{% for vlan_name in avahi_mdns_reflect_vlans %}
+{% set vlan = network_vlans | selectattr('name', 'equalto', vlan_name) | first %}
+{% if vlan.firewall.input != 'accept' %}
+config rule
+	option name '{{ vlan.name }}-to-router-mdns'
+	option src '{{ vlan.name }}'
+	option dest_port '5353'
+	option proto 'udp'
+	option target 'ACCEPT'
+	option limit '100/sec'
+{% endif %}
+
+{% endfor %}
+# =============================================================================
+# CLIENT ISOLATION
+# Prevent clients from communicating with each other within the same VLAN
+#
+# NOTE: This only blocks traffic that passes through the router. For wired
+# networks, clients on the same switch port/VLAN can still communicate at
+# Layer 2. For full isolation on wired networks, enable "Private VLAN" or
+# "Port Isolation" on the managed switch.
+# =============================================================================
+{% for vlan in network_vlans %}
+{% if vlan.isolate | default(false) %}
+config rule
+	option name '{{ vlan.name }}-client-isolation'
+	option src '{{ vlan.name }}'
+	option dest '{{ vlan.name }}'
+	option proto 'all'
+	option target 'REJECT'
+
+{% endif %}
+{% endfor %}
+# =============================================================================
+# DNS ENFORCEMENT
+# Block external DNS (ports 53, 853) to force use of router's DNS.
+# This ensures all DNS goes through Unbound (which forwards via DoT).
+# No DoH is being blocked.
+# =============================================================================
+{% for vlan in network_vlans %}
+{% if 'wan' in vlan.firewall.forward_to %}
+config rule
+	option name 'block-external-dns-{{ vlan.name }}'
+	option src '{{ vlan.name }}'
+	option dest 'wan'
+	option dest_port '53 853'
+	option proto 'tcp udp'
+	option target 'REJECT'
+
+{% endif %}
+{% endfor %}
+# =============================================================================
+# SPOOFING PROTECTION
+# Block packets from WAN with spoofed/invalid source addresses
+# Note: Some ranges (10.0.0.0/8, 192.168.0.0/16) not blocked due to CGNAT/ISP router
+# =============================================================================
+# Block packets claiming to be from our internal network (spoofing)
+config rule
+	option name 'Block-Spoofed-Internal'
+	option src 'wan'
+	option src_ip '172.31.0.0/16'
+	option target 'DROP'
+	option family 'ipv4'
+
+# Block loopback addresses from WAN (invalid)
+config rule
+	option name 'Block-Loopback-Src'
+	option src 'wan'
+	option src_ip '127.0.0.0/8'
+	option target 'DROP'
+	option family 'ipv4'
+
+# Block "this network" addresses from WAN (invalid)
+config rule
+	option name 'Block-Invalid-Src'
+	option src 'wan'
+	option src_ip '0.0.0.0/8'
+	option target 'DROP'
+	option family 'ipv4'
+
+# Block IPv6 loopback from WAN (invalid)
+config rule
+	option name 'Block-IPv6-Loopback-Src'
+	option src 'wan'
+	option src_ip '::1/128'
+	option target 'DROP'
+	option family 'ipv6'
+
+# Block IPv6 link-local from WAN (should never come from internet)
+config rule
+	option name 'Block-IPv6-LinkLocal-Src'
+	option src 'wan'
+	option src_ip 'fe80::/10'
+	option target 'DROP'
+	option family 'ipv6'
+
+# Block IPv6 ULA from WAN (private addresses, like RFC1918 for IPv6)
+config rule
+	option name 'Block-IPv6-ULA-Src'
+	option src 'wan'
+	option src_ip 'fc00::/7'
+	option target 'DROP'
+	option family 'ipv6'
+
+# =============================================================================
+# WAN RULES - Minimum required for WAN to function
+# =============================================================================
+# Allow DHCP renew from WAN (required to get/renew WAN IP)
+config rule
+	option name 'Allow-DHCP-Renew'
+	option src 'wan'
+	option proto 'udp'
+	option dest_port '68'
+	option target 'ACCEPT'
+	option family 'ipv4'
+	option limit '10/sec'
+
+# Allow DHCPv6 (required for IPv6 WAN)
+config rule
+	option name 'Allow-DHCPv6'
+	option src 'wan'
+	option proto 'udp'
+	option dest_port '546'
+	option family 'ipv6'
+	option target 'ACCEPT'
+	option limit '10/sec'
+
+# Allow IPv4 ICMP for Path MTU Discovery and diagnostics
+config rule
+	option name 'Allow-ICMPv4-Input'
+	option src 'wan'
+	option proto 'icmp'
+	list icmp_type 'destination-unreachable'
+	list icmp_type 'time-exceeded'
+	option limit '50/sec'
+	option family 'ipv4'
+	option target 'ACCEPT'
+
+# Allow essential ICMPv6 (required for IPv6 to work)
+config rule
+	option name 'Allow-ICMPv6-Input'
+	option src 'wan'
+	option proto 'icmpv6'
+	list icmp_type 'echo-reply'
+	list icmp_type 'destination-unreachable'
+	list icmp_type 'packet-too-big'
+	list icmp_type 'time-exceeded'
+	list icmp_type 'router-solicitation'
+	list icmp_type 'neighbor-solicitation'
+	list icmp_type 'router-advertisement'
+	list icmp_type 'neighbor-advertisement'
+	option limit '50/sec'
+	option family 'ipv6'
+	option target 'ACCEPT'
+
+# =============================================================================
+# ISP ROUTER ADMIN ACCESS - DNAT REDIRECTS
+# Access ISP router admin page ({{ network_isp_admin.target_ip }}) via {{ network_isp_admin.nat_ip }}
+# Zone and forwarding rules are defined via network_vlans (isp_admin VLAN)
+# =============================================================================
+{% for zone in network_isp_admin.allowed_from %}
+{% for port in network_isp_admin.ports %}
+config redirect
+	option name 'isp-router-{{ zone }}-{{ port }}'
+	option src '{{ zone }}'
+	option src_dip '{{ network_isp_admin.nat_ip }}'
+	option src_dport '{{ port }}'
+	option dest 'isp_admin'
+	option dest_ip '{{ network_isp_admin.target_ip }}'
+	option dest_port '{{ port }}'
+	option proto 'tcp'
+	option target 'DNAT'
+
+{% endfor %}
+{% endfor %}
+# =============================================================================
+# TAILSCALE VPN
+# Zone and forwarding rules for Tailscale interface
+# Tailscale can access: {{ tailscale_config.allowed_vlans | join(', ') }}
+# =============================================================================
+config zone
+	option name 'tailscale'
+	option input 'REJECT'
+	option output 'ACCEPT'
+	option forward 'REJECT'
+	list device 'tailscale0'
+
+# Tailscale -> router: allow only essential services
+config rule
+	option name 'tailscale-to-router-dns'
+	option src 'tailscale'
+	option dest_port '53'
+	option proto 'tcp udp'
+	option target 'ACCEPT'
+	option limit '200/sec'
+
+config rule
+	option name 'tailscale-to-router-icmp'
+	option src 'tailscale'
+	option proto 'icmp'
+	option target 'ACCEPT'
+	option limit '100/sec'
+
+config rule
+	option name 'tailscale-to-router-https'
+	option src 'tailscale'
+	option dest_port '{{ uhttpd_config.https_port | default(443) }}'
+	option proto 'tcp'
+	option target 'ACCEPT'
+	option limit '50/sec'
+
+config rule
+	option name 'tailscale-to-router-ssh'
+	option src 'tailscale'
+	option dest_port '22'
+	option proto 'tcp'
+	option target 'ACCEPT'
+	option limit '10/sec'
+
+# Tailscale can reach WAN (for exit node functionality)
+config forwarding
+	option src 'tailscale'
+	option dest 'wan'
+
+# Tailscale can reach allowed VLANs only
+{% for vlan in network_vlans if vlan.name in tailscale_config.allowed_vlans %}
+config forwarding
+	option src 'tailscale'
+	option dest '{{ vlan.name }}'
+
+{% endfor %}
+# Allow Tailscale UDP port from WAN (for direct connections)
+config rule
+	option name 'Allow-Tailscale'
+	option src 'wan'
+	option dest_port '{{ tailscale_config.port }}'
+	option proto 'udp'
+	option target 'ACCEPT'
+	option limit '100/sec'
+
+# =============================================================================
+# FIREWALL LOGGING
+# Log dropped/rejected packets from WAN for security monitoring
+# View logs: logread | grep FW-DROP
+# Rate limited to prevent log flooding from internet noise
+# =============================================================================
+config rule
+	option name 'Log-Dropped-WAN-Input'
+	option src 'wan'
+	option proto 'all'
+	option target 'LOG'
+	option log_prefix 'FW-DROP-WAN: '
+	option limit '10/min'
+
+# Log inter-VLAN drops for security monitoring
+# View logs: logread | grep FW-DROP-VLAN
+{% for vlan in network_vlans %}
+{% if vlan.firewall.input != 'accept' %}
+config rule
+	option name 'Log-Rejected-{{ vlan.name }}-Forward'
+	option src '{{ vlan.name }}'
+	option dest '*'
+	option proto 'all'
+	option target 'LOG'
+	option log_prefix 'FW-DROP-VLAN-{{ vlan.name | upper }}: '
+	option limit '5/min'
+{% endif %}
+{% endfor %}

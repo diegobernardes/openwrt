@@ -1,0 +1,6 @@
+---
+- name: Restart sqm
+  ansible.builtin.service:
+    name: sqm
+    state: restarted
+  listen: restart sqm

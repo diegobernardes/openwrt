@@ -1,0 +1,66 @@
+#!/bin/sh
+# Resize root partition and filesystem to use all available storage.
+# This script is idempotents. Reboots between partition and filesystem resize.
+#
+# Usage:
+#   resize-root          - Run resize operation. Outputs "reboot" if needed.
+#   resize-root --detect - Output root device path (e.g., /dev/mmcblk0p2)
+
+set -e
+
+ROOT_BLK="$(readlink -f /sys/dev/block/"$(awk '$5=="/" { print $3; exit }' /proc/self/mountinfo)")"
+ROOT_DISK="/dev/$(basename "${ROOT_BLK%/*}")"
+ROOT_PART="${ROOT_BLK##*[^0-9]}"
+ROOT_DEV="/dev/${ROOT_BLK##*/}"
+
+if [ -z "$ROOT_BLK" ] || [ -z "$ROOT_DEV" ]; then
+  echo "ERROR: Could not determine root block device from /proc/self/mountinfo" >&2
+  exit 1
+fi
+
+# Output root device path and exit.
+if [ "$1" = "--detect" ]; then
+  echo "$ROOT_DEV"
+  exit 0
+fi
+
+# Phase 1: Partition resize.
+DISK_SIZE=$(parted -s "$ROOT_DISK" unit s print | awk '/^Disk \/dev/{print $3}' | tr -d 's')
+PART_END=$(parted -s "$ROOT_DISK" unit s print | awk -v p="$ROOT_PART" '$1==p {print $3}' | tr -d 's')
+
+if ! [ "${DISK_SIZE:-0}" -gt 0 ] || ! [ "${PART_END:-0}" -gt 0 ]; then
+  echo "ERROR: Could not read disk/partition size from parted" >&2
+  exit 1
+fi
+
+if [ $((DISK_SIZE - PART_END)) -ge 2048 ]; then
+  parted -f -s "${ROOT_DISK}" resizepart "${ROOT_PART}" 100%
+  echo "reboot"
+  exit 0
+fi
+
+# Phase 2: Filesystem resize (via loop device. Hides the live mount from resize2fs,
+# allowing forced offline resize on kernels without online-resize support).
+# Clean up any stale loop devices pointing to our root device.
+for loop in /dev/loop*; do
+  [ -b "$loop" ] || continue
+  if losetup "$loop" 2>/dev/null | grep -qF "$ROOT_DEV"; then
+    losetup -d "$loop" 2>/dev/null || true
+  fi
+done
+
+LOOP_DEV="$(losetup --show -f "${ROOT_DEV}")"
+
+# Use trap to ensure cleanup on any exit.
+trap 'losetup -d "${LOOP_DEV}" 2>/dev/null || true' EXIT
+
+RESULT=$(resize2fs -f "${LOOP_DEV}" 2>&1) || {
+  echo "resize2fs failed: $RESULT" >&2
+  exit 1
+}
+
+if echo "$RESULT" | grep -q "Nothing to do"; then
+  exit 0
+fi
+
+echo "reboot"

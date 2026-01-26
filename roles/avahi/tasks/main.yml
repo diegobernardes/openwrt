@@ -1,0 +1,27 @@
+---
+- name: Install avahi packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - avahi-dbus-daemon
+      - avahi-utils
+
+- name: Ensure avahi config directory exists
+  ansible.builtin.file:
+    path: /etc/avahi
+    state: directory
+    mode: "0755"
+
+- name: Install avahi config
+  ansible.builtin.template:
+    src: avahi.j2
+    dest: /etc/avahi/avahi-daemon.conf
+    mode: "0644"
+  notify: restart avahi-daemon
+
+- name: Enable avahi-daemon service
+  ansible.builtin.service:
+    name: avahi-daemon
+    enabled: true
+    state: started
+  changed_when: false

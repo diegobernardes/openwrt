@@ -1,0 +1,32 @@
+---
+- name: Install packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - kmod-tcp-bbr
+      - luci-app-statistics
+      - luci-app-nlbwmon
+      - btop
+
+- name: Check if BBR module is loaded
+  ansible.builtin.stat:
+    path: /sys/module/tcp_bbr
+  register: system_tcp_bbr_module
+
+- name: Load BBR kernel module
+  ansible.builtin.command: modprobe tcp_bbr
+  when: not system_tcp_bbr_module.stat.exists
+
+- name: Apply system config
+  ansible.builtin.template:
+    src: system.j2
+    dest: /etc/config/system
+    mode: "0644"
+  notify: reboot for system config
+
+- name: Apply network sysctl config
+  ansible.builtin.template:
+    src: network-sysctl.j2
+    dest: /etc/sysctl.conf
+    mode: "0644"
+  notify: apply sysctl settings

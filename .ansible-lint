@@ -1,0 +1,24 @@
+---
+profile: production
+exclude_paths:
+  - .git/
+  - .task/
+  - group_vars/all/vault.yml
+  - inventory.yml
+
+skip_list:
+  - command-instead-of-module
+  - command-instead-of-shell
+  - risky-shell-pipe
+  - no-changed-when
+  - partial-become
+
+enable_list:
+  - empty-string-compare
+  - no-log-password
+
+warn_list:
+  - name[missing]
+  - yaml[line-length]
+
+offline: true

@@ -1,0 +1,51 @@
+---
+# Disable OpenWrt's default IRQ affinity hotplug to avoid conflicting with our custom script.
+- name: Disable 40-net-smp-affinity hotplug script
+  ansible.builtin.command: mv /etc/hotplug.d/net/40-net-smp-affinity /etc/hotplug.d/net/40-net-smp-affinity.disabled
+  args:
+    creates: /etc/hotplug.d/net/40-net-smp-affinity.disabled
+    removes: /etc/hotplug.d/net/40-net-smp-affinity
+
+# Use 99-packet-steering to ensure it runs after any other scripts
+- name: Install packet steering hotplug script
+  ansible.builtin.template:
+    src: packet-steering-hotplug.j2
+    dest: /etc/hotplug.d/net/99-packet-steering
+    mode: "0755"
+  notify: restart packet-steering
+
+- name: Install packet steering init script
+  ansible.builtin.template:
+    src: packet-steering-init.j2
+    dest: /etc/init.d/packet-steering
+    mode: "0755"
+  notify: restart packet-steering
+
+# Replace the default OpenWrt packet_steering init script with a no-op
+- name: Install disabled packet_steering init script (replaces OpenWrt default)
+  ansible.builtin.template:
+    src: packet_steering-disabled.j2
+    dest: /etc/init.d/packet_steering
+    mode: "0755"
+
+# Disable the default OpenWrt packet-steering.uc by replacing it with a no-op
+- name: Install disabled packet-steering.uc (replaces OpenWrt default)
+  ansible.builtin.copy:
+    content: |
+      #!/usr/bin/ucode
+      // Disabled - using custom packet-steering init script instead
+    dest: /usr/libexec/network/packet-steering.uc
+    mode: "0755"
+
+- name: Disable and stop OpenWrt default packet_steering service
+  ansible.builtin.service:
+    name: packet_steering
+    enabled: false
+    state: stopped
+
+- name: Enable packet-steering service
+  ansible.builtin.service:
+    name: packet-steering
+    enabled: true
+    state: started
+  changed_when: false

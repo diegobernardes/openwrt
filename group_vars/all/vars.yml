@@ -1,0 +1,172 @@
+---
+network_interfaces:
+  wan: eth1
+  lan_trunk: eth2
+  mgmt: eth0
+
+network_vlans:
+  - id: 11
+    name: management
+    subnet: 172.31.11.0/24
+    router_ip: 172.31.11.1
+    dhcp_start: 172.31.11.100
+    dhcp_limit: 150
+    bridge: true
+    firewall:
+      input: accept
+      forward: drop
+      forward_to: [wan, isp_admin]
+
+  - id: 20
+    name: server
+    subnet: 172.31.20.0/24
+    router_ip: 172.31.20.1
+    dhcp_start: 172.31.20.100
+    dhcp_limit: 150
+    firewall:
+      input: reject
+      forward: drop
+      forward_to: [wan, shared]
+      router_services: [dhcp, dns, icmp, ntp, https]
+
+  - id: 30
+    name: trusted
+    subnet: 172.31.30.0/24
+    router_ip: 172.31.30.1
+    dhcp_start: 172.31.30.100
+    dhcp_limit: 150
+    firewall:
+      input: accept
+      forward: drop
+      forward_to: [wan, server, shared, isp_admin]
+
+  - id: 40
+    name: guest
+    subnet: 172.31.40.0/24
+    router_ip: 172.31.40.1
+    dhcp_start: 172.31.40.100
+    dhcp_limit: 150
+    dhcp_lease: "7200" # 2 hours.
+    isolate: true
+    firewall:
+      input: reject
+      forward: drop
+      forward_to: [wan, shared]
+      router_services: [dhcp, dns, ntp]
+
+  - id: 50
+    name: shared
+    subnet: 172.31.50.0/24
+    router_ip: 172.31.50.1
+    dhcp_start: 172.31.50.100
+    dhcp_limit: 150
+    firewall:
+      input: reject
+      forward: drop
+      forward_to: [wan, guest]
+      router_services: [dhcp, dns, ntp]
+
+  - id: 60
+    name: iot
+    subnet: 172.31.60.0/24
+    router_ip: 172.31.60.1
+    dhcp_start: 172.31.60.100
+    dhcp_limit: 150
+    firewall:
+      input: reject
+      forward: drop
+      forward_to: []
+      router_services: [dhcp, dns, ntp]
+
+  - id: 70
+    name: isp_admin
+    subnet: 192.168.1.0/24
+    router_ip: 192.168.1.2
+    firewall:
+      input: drop
+      forward: drop
+      forward_to: []
+      masq: true
+
+dhcp_static_hosts:
+  - name: server
+    mac: "{{ vault_mac_server }}"
+    ip: 172.31.20.2
+
+  - name: nas
+    mac: "{{ vault_mac_nas }}"
+    ip: 172.31.20.3
+
+  - name: ap-bedroom
+    mac: "{{ vault_mac_ap_bedroom }}"
+    ip: 172.31.11.3
+
+  - name: ap-living-room
+    mac: "{{ vault_mac_ap_living_room }}"
+    ip: 172.31.11.4
+
+  - name: ap-office
+    mac: "{{ vault_mac_ap_office }}"
+    ip: 172.31.11.5
+
+  - name: mobile-1
+    mac: "{{ vault_mac_mobile_1 }}"
+    ip: 172.31.30.10
+    bypass_adblock: true
+
+adblock_unbound_list: /var/lib/unbound/adb_list.adblock-fast
+
+dns_adblock:
+  blocklists:
+    - https://cdn.jsdelivr.net/gh/StevenBlack/hosts/hosts
+
+dns_local_records:
+  - name: isp-router.internal
+    ip: 172.31.70.2
+
+network_isp_admin:
+  target_ip: 192.168.1.1
+  nat_ip: 172.31.70.2
+  ports:
+    - 80
+  allowed_from:
+    - management
+    - trusted
+
+system_hostname: router
+system_timezone: "{{ vault_system_timezone }}"
+system_zonename: "{{ vault_system_zonename }}"
+
+sqm_download: 950000 # 950 Mbit/s
+sqm_upload: 950000 # 950 Mbit/s
+
+connectivity_check_host_a: "9.9.9.9"
+connectivity_check_host_b: "149.112.112.112"
+
+watchcat_config:
+  pingperiod: 30s
+  forcedelay: 3m
+
+avahi_mdns_reflect_vlans:
+  - trusted
+  - server
+  - iot
+  - shared
+
+tailscale_config:
+  auth_key_enabled: true
+  exit_node: true
+  port: 41641
+  subnet: 100.64.0.0/10
+  allowed_vlans:
+    - trusted
+    - server
+
+uhttpd_config:
+  http_port: 80
+  https_port: 443
+  listen_vlans:
+    - management
+    - trusted
+
+router_password: "{{ vault_router_password }}"

@@ -1,0 +1,27 @@
+---
+- name: Install chrony package
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - chrony
+      - luci-app-chrony
+
+- name: Install chrony configuration
+  ansible.builtin.template:
+    src: chrony.j2
+    dest: /etc/config/chrony
+    mode: "0644"
+  notify: restart chronyd
+
+- name: Disable and stop sysntpd
+  ansible.builtin.service:
+    name: sysntpd
+    enabled: false
+    state: stopped
+
+- name: Enable chronyd service
+  ansible.builtin.service:
+    name: chronyd
+    enabled: true
+    state: started
+  changed_when: false

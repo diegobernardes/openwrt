@@ -1,0 +1,30 @@
+#!/bin/sh /etc/rc.common
+# Ensures the Unbound adblock include file exists before Unbound starts.
+#
+# Why this is needed:
+#   - Unbound config includes {{ adblock_unbound_list }}
+#   - /var is tmpfs on OpenWrt, so this file disappears on every reboot
+#   - If the include file is missing, Unbound fails to start and DNS breaks
+#   - adblock-fast (START=20) handles boot-time population from its compressed
+#     cache, but Unbound (START=60) must not start before the file exists
+#
+# This script runs at START=18 - before both adblock-fast (20) and Unbound (60).
+# It creates an empty placeholder so Unbound can always start.
+# adblock-fast then overwrites it with the real blocklist shortly after.
+
+START=18
+
+start() {
+    mkdir -p /var/lib/unbound
+    touch {{ adblock_unbound_list }}
+    chown unbound:unbound {{ adblock_unbound_list }} 2>/dev/null || true
+    chmod 0644 {{ adblock_unbound_list }} 2>/dev/null || true
+}
+
+boot() {
+    start
+}
+
+stop() {
+    return 0
+}

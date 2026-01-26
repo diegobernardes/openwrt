@@ -1,0 +1,40 @@
+[server]
+host-name={{ system_hostname }}
+domain-name=local
+use-ipv4=yes
+use-ipv6=no
+
+# Allow publishing via the reflector.
+# Interface names must match Linux interface names:
+#   bridged VLANs -> br-<vlan_name> (bridge)
+#   all other VLANs -> <lan_trunk>.<vlan_id> (tagged sub-interface)
+{% set ifaces = [] %}
+{% for vlan in network_vlans | selectattr('name', 'in', avahi_mdns_reflect_vlans) %}
+{%   if vlan.bridge | default(false) %}
+{%     set _ = ifaces.append('br-' ~ vlan.name) %}
+{%   else %}
+{%     set _ = ifaces.append(network_interfaces.lan_trunk ~ '.' ~ vlan.id) %}
+{%   endif %}
+{% endfor %}
+allow-interfaces={{ ifaces | join(',') }}
+
+[publish]
+# Publish router services.
+publish-addresses=yes
+publish-hinfo=no
+publish-workstation=no
+publish-domain=yes
+
+[reflector]
+# Enable mDNS reflection between VLANs.
+enable-reflector=yes
+
+# Disable IPv6 reflection. Internal network is IPv4 only.
+reflect-ipv=no
+
+[rlimits]
+rlimit-core=0
+rlimit-data=4194304
+rlimit-stack=4194304
+rlimit-nofile=768
+rlimit-nproc=3

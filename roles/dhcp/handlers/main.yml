@@ -1,0 +1,7 @@
+---
+- name: Restart dnsmasq
+  ansible.builtin.service:
+    name: dnsmasq
+    state: restarted
+  listen: restart dnsmasq
+  when: inventory_hostname == 'router'

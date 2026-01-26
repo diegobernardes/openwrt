@@ -1,0 +1,28 @@
+# Local domain settings - static zones we fully control
+local-zone: "lan." static
+local-zone: "internal." static
+
+# Router hostnames - each VLAN gets router.<vlan>.lan pointing to gateway
+{% set mgmt_vlan = network_vlans | selectattr('name', 'equalto', 'management') | first | default(none) %}
+{% for vlan in network_vlans %}
+{% if vlan.dhcp_start is defined %}
+local-data: "router.{{ vlan.name }}.lan. IN A {{ vlan.router_ip }}"
+local-data-ptr: "{{ vlan.router_ip }} router.{{ vlan.name }}.lan."
+{% endif %}
+{% endfor %}
+
+# Primary router hostname (management VLAN)
+local-data: "router.lan. IN A {{ mgmt_vlan.router_ip }}"
+local-data-ptr: "{{ mgmt_vlan.router_ip }} router.lan."
+
+# Static hosts from DHCP reservations -> hostname.lan
+{% for host in dhcp_static_hosts %}
+local-data: "{{ host.name }}.lan. IN A {{ host.ip }}"
+local-data-ptr: "{{ host.ip }} {{ host.name }}.lan."
+{% endfor %}
+
+# Custom DNS records (e.g., isp-router.internal) with PTR records
+{% for record in dns_local_records %}
+local-data: "{{ record.name }}. IN A {{ record.ip }}"
+local-data-ptr: "{{ record.ip }} {{ record.name }}."
+{% endfor %}

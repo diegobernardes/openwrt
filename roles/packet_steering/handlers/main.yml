@@ -1,0 +1,6 @@
+---
+- name: Restart packet-steering
+  ansible.builtin.service:
+    name: packet-steering
+    state: restarted
+  listen: restart packet-steering

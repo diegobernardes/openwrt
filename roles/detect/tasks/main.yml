@@ -1,0 +1,54 @@
+---
+- name: Use target
+  when: target is defined
+  block:
+    - name: Validate target is reachable
+      ansible.builtin.wait_for:
+        host: "{{ hostvars[target].ansible_host }}"
+        port: 22
+        timeout: 5
+        state: started
+
+    - name: Add target to group
+      ansible.builtin.add_host:
+        name: "{{ target }}"
+        groups: target_router
+      changed_when: false
+
+- name: Detect target
+  when: target is not defined
+  block:
+    - name: Check SSH to router
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['router'].ansible_host }}"
+        port: 22
+        timeout: 5
+        state: started
+      register: detect_ssh_router
+      failed_when: false
+
+    - name: Check SSH to router_factory
+      ansible.builtin.wait_for:
+        host: "{{ hostvars['router_factory'].ansible_host }}"
+        port: 22
+        timeout: 5
+        state: started
+      register: detect_ssh_router_factory
+      failed_when: false
+      when: detect_ssh_router is failed
+
+    - name: Fail if router not reachable at either IP
+      ansible.builtin.fail:
+        msg: |
+          Router not reachable via SSH at either IP:
+            - router: {{ hostvars['router'].ansible_host }}
+            - router_factory: {{ hostvars['router_factory'].ansible_host }}
+      when:
+        - detect_ssh_router is failed
+        - detect_ssh_router_factory is failed
+
+    - name: Add detected target to group
+      ansible.builtin.add_host:
+        name: "{{ 'router' if detect_ssh_router is succeeded else 'router_factory' }}"
+        groups: target_router
+      changed_when: false

@@ -1,0 +1,21 @@
+---
+- name: Install watchcat package
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - watchcat
+      - luci-app-watchcat
+
+- name: Install watchcat config
+  ansible.builtin.template:
+    src: watchcat.j2
+    dest: /etc/config/watchcat
+    mode: "0644"
+  notify: restart watchcat
+
+- name: Enable watchcat service
+  ansible.builtin.service:
+    name: watchcat
+    enabled: true
+    state: started
+  changed_when: false

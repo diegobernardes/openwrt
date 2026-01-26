@@ -1,0 +1,32 @@
+---
+- name: "Phase 1: Detect router"
+  hosts: localhost
+  roles:
+    - detect
+
+- name: "Phase 2: Base configuration"
+  hosts: target_router
+  roles:
+    - bootstrap
+    - storage
+
+- name: "Phase 3: Core network configuration"
+  hosts: target_router
+  roles:
+    - dns
+    - dhcp
+    - firewall
+    - network
+
+- name: "Phase 4: Configure system"
+  hosts: target_router
+  roles:
+    - adblock
+    - watchcat
+    - ntp
+    - avahi
+    - tailscale
+    - uhttpd
+    - packet_steering
+    - sqm
+    - system

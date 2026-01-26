@@ -1,0 +1,6 @@
+{% for host in dhcp_static_hosts %}
+{% if host.bypass_adblock is defined and host.bypass_adblock %}
+# {{ host.name }} - bypass adblock
+access-control-view: {{ host.ip }}/32 "no-adblock"
+{% endif %}
+{% endfor %}

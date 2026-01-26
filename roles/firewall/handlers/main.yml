@@ -1,0 +1,7 @@
+---
+- name: Reload firewall
+  listen: reload firewall
+  ansible.builtin.service:
+    name: firewall
+    state: reloaded
+  when: inventory_hostname == 'router'

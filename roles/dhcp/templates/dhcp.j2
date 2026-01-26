@@ -1,0 +1,29 @@
+config dnsmasq
+	option port '0'
+	option authoritative '1'
+	option leasefile '/tmp/dhcp.leases'
+
+config odhcpd 'odhcpd'
+	option maindhcp '0'
+
+{% for vlan in network_vlans if vlan.dhcp_start is defined %}
+config dhcp '{{ vlan.name }}'
+	option interface '{{ vlan.name }}'
+	option start '{{ vlan.dhcp_start.split(".")[-1] }}'
+	option limit '{{ vlan.dhcp_limit | default(100) }}'
+	option leasetime '{{ vlan.dhcp_lease | default("86400") }}'
+	option ra 'disabled'
+	option dhcpv6 'disabled'
+	# DNS server (option 6).
+	list dhcp_option '6,{{ vlan.router_ip }}'
+	# NTP server (option 42).
+	list dhcp_option '42,{{ vlan.router_ip }}'
+
+{% endfor %}
+{% for host in dhcp_static_hosts %}
+config host
+	option name '{{ host.name }}'
+	option mac '{{ host.mac }}'
+	option ip '{{ host.ip }}'
+
+{% endfor %}

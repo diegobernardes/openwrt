@@ -1,0 +1,6 @@
+config watchcat 'wan_watchdog'
+	option mode 'restart_iface'
+	option iface 'wan'
+	option pinghosts '{{ connectivity_check_host_a }} {{ connectivity_check_host_b }}'
+	option pingperiod '{{ watchcat_config.pingperiod }}'
+	option forcedelay '{{ watchcat_config.forcedelay }}'

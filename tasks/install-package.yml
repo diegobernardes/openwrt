@@ -1,0 +1,43 @@
+---
+- name: Check if apk package list exists
+  ansible.builtin.raw: ls /var/cache/apk/APKINDEX.* 2>/dev/null | head -1
+  register: _apk_lists_check
+  changed_when: false
+
+- name: Get installed packages
+  ansible.builtin.raw: apk info 2>/dev/null
+  register: _packages_installed
+  changed_when: false
+
+- name: Determine packages to install
+  ansible.builtin.set_fact:
+    _packages_to_install: "{{ packages | difference(_packages_installed.stdout_lines) }}"
+
+- name: Ensure WAN is reachable before package operations
+  when: _apk_lists_check.stdout | trim == "" or _packages_to_install | length > 0
+  block:
+    - name: Wait for WAN connectivity
+      ansible.builtin.raw: |
+        for i in $(seq 1 30); do
+          ping -c 1 -W 2 {{ connectivity_check_host_a }} >/dev/null 2>&1 && exit 0
+          sleep 2
+        done
+        exit 1
+      changed_when: false
+      failed_when: false
+      register: _wan_check
+
+    - name: Fail if WAN is not reachable
+      when: _wan_check.rc != 0
+      ansible.builtin.fail:
+        msg: "WAN not reachable after 60 seconds. Check physical connection and interface config"
+
+- name: Update package list
+  when: _apk_lists_check.stdout | trim == ""
+  ansible.builtin.raw: apk update
+  changed_when: false
+
+- name: Install {{ _packages_to_install | join(', ') }}
+  ansible.builtin.raw: apk add {{ _packages_to_install | join(' ') }}
+  when: _packages_to_install | length > 0
+  changed_when: true

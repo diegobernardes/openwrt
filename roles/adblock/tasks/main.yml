@@ -1,0 +1,52 @@
+---
+- name: Install adblock-fast
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - adblock-fast
+      - luci-app-adblock-fast
+      - gawk
+      - grep
+      - sed
+      - coreutils-sort
+
+- name: Install adblock-fast config
+  ansible.builtin.template:
+    src: adblock-fast.j2
+    dest: /etc/config/adblock-fast
+    mode: "0644"
+  notify: restart adblock-fast
+
+- name: Install Unbound adblock config
+  ansible.builtin.template:
+    src: unbound-adblock.j2
+    dest: /etc/unbound/unbound_adblock.conf
+    mode: "0644"
+  notify: restart adblock-fast
+
+- name: Install Unbound adblock placeholder init script
+  ansible.builtin.template:
+    src: unbound-adblock-placeholder.j2
+    dest: /etc/init.d/unbound-adblock-placeholder
+    mode: "0755"
+
+- name: Enable Unbound adblock placeholder service
+  ansible.builtin.service:
+    name: unbound-adblock-placeholder
+    enabled: true
+
+- name: Run placeholder now (ensure adblock tmpfs list file exists for Unbound)
+  ansible.builtin.raw: /etc/init.d/unbound-adblock-placeholder start
+  changed_when: false
+
+- name: Enable adblock-fast service
+  ansible.builtin.service:
+    name: adblock-fast
+    enabled: true
+
+- name: Schedule daily adblock-fast blocklist update at 03:00
+  ansible.builtin.cron:
+    name: adblock-fast daily update
+    minute: "0"
+    hour: "3"
+    job: /etc/init.d/adblock-fast dl

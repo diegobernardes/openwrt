@@ -1,0 +1,63 @@
+config interface 'loopback'
+	option device 'lo'
+	option proto 'static'
+	option ipaddr '127.0.0.1'
+	option netmask '255.0.0.0'
+
+config globals 'globals'
+	# ULA prefix explicitly disabled - all LAN interfaces are IPv4-only.
+	# The router itself uses the ISP-provided IPv6 address on the WAN (wan6).
+	# Internal VLANs have option ipv6 '0' and odhcpd is stopped, so no
+	# IPv6 addresses or RA are ever assigned to LAN clients.
+	option ula_prefix ''
+
+config interface 'wan'
+	option device '{{ network_interfaces.wan }}'
+	option proto 'dhcp'
+	option macaddr '{{ vault_mac_eth1 }}'
+
+config interface 'wan6'
+	# Request an IPv6 address from the ISP if offered (falls back gracefully
+	# if the ISP does not provide IPv6). No prefix delegation (reqprefix no)
+	# so the ISP address stays on the router and is never distributed to LAN.
+	option device '{{ network_interfaces.wan }}'
+	option proto 'dhcpv6'
+	option reqaddress 'try'
+	option reqprefix 'no'
+
+config device
+	option name '{{ network_interfaces.lan_trunk }}'
+	option macaddr '{{ vault_mac_eth2 }}'
+
+# =============================================================================
+# VLAN INTERFACES
+# =============================================================================
+{% for vlan in network_vlans %}
+# VLAN {{ vlan.id }} - {{ vlan.name }}
+config device
+	option type '8021q'
+	option device '{{ network_interfaces.lan_trunk }}'
+	option vid '{{ vlan.id }}'
+	option name '{{ network_interfaces.lan_trunk }}.{{ vlan.id }}'
+
+{% if vlan.bridge | default(false) %}
+# Bridge: merges untagged {{ network_interfaces.mgmt }} with the
+# tagged trunk sub-interface so the router is reachable from either path.
+config device
+	option name 'br-{{ vlan.name }}'
+	option type 'bridge'
+	list ports '{{ network_interfaces.mgmt }}'
+	list ports '{{ network_interfaces.lan_trunk }}.{{ vlan.id }}'
+
+config interface '{{ vlan.name }}'
+	option device 'br-{{ vlan.name }}'
+{% else %}
+config interface '{{ vlan.name }}'
+	option device '{{ network_interfaces.lan_trunk }}.{{ vlan.id }}'
+{% endif %}
+	option proto 'static'
+	option ipaddr '{{ vlan.router_ip }}'
+	option netmask '{{ vlan.subnet | ansible.utils.ipaddr("netmask") }}'
+	option ipv6 '0'
+
+{% endfor %}

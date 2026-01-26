@@ -1,0 +1,7 @@
+---
+- name: Restart unbound
+  ansible.builtin.service:
+    name: unbound
+    state: restarted
+  listen: restart unbound
+  when: inventory_hostname == 'router'

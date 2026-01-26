@@ -1,0 +1,7 @@
+---
+- name: Apply firewall config
+  ansible.builtin.template:
+    src: firewall.j2
+    dest: /etc/config/firewall
+    mode: "0644"
+  notify: reload firewall

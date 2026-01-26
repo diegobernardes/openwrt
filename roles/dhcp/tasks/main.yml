@@ -1,0 +1,14 @@
+---
+- name: Apply DHCP config
+  ansible.builtin.template:
+    src: dhcp.j2
+    dest: /etc/config/dhcp
+    mode: "0644"
+  notify: restart dnsmasq
+
+# odhcpd handles IPv6 RA/DHCPv6. This is not needed since all VLANs are IPv4-only.
+- name: Disable and stop odhcpd service
+  ansible.builtin.service:
+    name: odhcpd
+    enabled: false
+    state: stopped

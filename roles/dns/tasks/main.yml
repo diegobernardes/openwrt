@@ -1,0 +1,55 @@
+---
+- name: Install DNS packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - unbound-daemon
+      - unbound-control
+      - unbound-anchor
+      - luci-app-unbound
+
+- name: Create DNS directory
+  ansible.builtin.file:
+    path: /etc/unbound
+    state: directory
+    mode: "0755"
+
+- name: Initialize DNSSEC root trust anchor
+  ansible.builtin.command: unbound-anchor -a /etc/unbound/root.key
+  args:
+    creates: /etc/unbound/root.key
+  register: dns_dnssec_anchor
+  changed_when: dns_dnssec_anchor.rc == 1
+  failed_when: dns_dnssec_anchor.rc not in [0, 1]
+
+# This is required to start unbound.
+- name: Create Unbound adblock config stub
+  ansible.builtin.file:
+    path: /etc/unbound/unbound_adblock.conf
+    state: touch
+    mode: "0644"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Install Unbound config files
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "0644"
+  notify: restart unbound
+  loop:
+    - src: unbound.j2
+      dest: /etc/config/unbound
+    - src: local-data.j2
+      dest: /etc/unbound/local-data.conf
+    - src: unbound-srv.j2
+      dest: /etc/unbound/unbound_srv.conf
+    - src: unbound-ext.j2
+      dest: /etc/unbound/unbound_ext.conf
+
+- name: Enable Unbound service
+  ansible.builtin.service:
+    name: unbound
+    enabled: true
+    state: started
+  changed_when: false

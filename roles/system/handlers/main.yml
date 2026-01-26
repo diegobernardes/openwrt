@@ -1,0 +1,11 @@
+---
+- name: Apply sysctl settings
+  ansible.builtin.command: sysctl -p /etc/sysctl.conf
+  listen: apply sysctl settings
+
+- name: Reboot for system config
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+    reboot_command: reboot
+    test_command: uptime
+  listen: reboot for system config

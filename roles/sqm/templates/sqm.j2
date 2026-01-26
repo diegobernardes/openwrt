@@ -1,0 +1,22 @@
+config queue 'wan'
+	option enabled '1'
+	option interface '{{ network_interfaces.wan }}'
+	option download '{{ sqm_download }}'
+	option upload '{{ sqm_upload }}'
+	option qdisc 'cake'
+	option script 'piece_of_cake.qos'
+	option linklayer 'ethernet'
+	option overhead '34'
+	option debug_logging '0'
+	option qdisc_advanced '1'
+	# Preserve DSCP marks for latency-sensitive traffic prioritization.
+	option squash_dscp '0'
+	option squash_ingress '0'
+	option ingress_ecn 'ECN'
+	option egress_ecn 'BESTEFFORT'
+	option qdisc_really_really_advanced '1'
+	# diffserv4: 4-tier QoS (Voice/Video/Best-Effort/Bulk) based on DSCP.
+	# ack-filter-aggressive: Drop redundant TCP ACKs during bulk transfers.
+	# wash: Clear DSCP on egress (ISP ignores anyway) while using internally.
+	option iqdisc_opts 'dual-dsthost diffserv4 ack-filter-aggressive'
+	option eqdisc_opts 'nat dual-srchost diffserv4 wash ack-filter-aggressive'

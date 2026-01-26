@@ -1,0 +1,6 @@
+---
+- name: Restart uhttpd
+  ansible.builtin.service:
+    name: uhttpd
+    state: restarted
+  listen: restart uhttpd

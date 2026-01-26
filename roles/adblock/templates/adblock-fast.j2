@@ -1,0 +1,14 @@
+config adblock-fast 'config'
+	option dns 'unbound.adb_list'
+	option compressed_cache '1'
+	option compressed_cache_dir '/etc'
+	option procd_boot_wan_timeout '60'
+	option enabled '1'
+
+{% for url in dns_adblock.blocklists %}
+config file_url
+	option url '{{ url }}'
+	option action 'block'
+	option enabled '1'
+
+{% endfor %}

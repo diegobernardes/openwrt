@@ -1,0 +1,47 @@
+---
+- name: Install tailscale package
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - tailscale
+
+- name: Install tailscale config
+  ansible.builtin.template:
+    src: tailscale.j2
+    dest: /etc/config/tailscale
+    mode: "0644"
+  notify: restart tailscale
+
+- name: Enable tailscale service
+  ansible.builtin.service:
+    name: tailscale
+    enabled: true
+    state: started
+  changed_when: false
+
+- name: Create tailscale config directory
+  ansible.builtin.file:
+    path: /etc/tailscale
+    state: directory
+    mode: "0700"
+
+- name: Write tailscale auth key to file
+  ansible.builtin.copy:
+    content: "{{ vault_tailscale_auth_key }}"
+    dest: /etc/tailscale/authkey
+    mode: "0600"
+  no_log: true
+
+- name: Configure tailscale
+  vars:
+    _vlans: "{{ network_vlans | selectattr('name', 'in', tailscale_config.allowed_vlans) | map(attribute='subnet') }}"
+    _routes: "{{ _vlans | join(',') }}"
+    _exit_node: "{{ '--advertise-exit-node' if tailscale_config.exit_node else '' }}"
+  ansible.builtin.raw: >-
+    tailscale up
+    --auth-key=file:/etc/tailscale/authkey
+    --advertise-routes={{ _routes }}
+    {{ _exit_node }}
+    --timeout=30s
+  no_log: true
+  changed_when: false

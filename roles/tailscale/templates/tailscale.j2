@@ -1,0 +1,6 @@
+config tailscale 'settings'
+	option enabled '1'
+	option port '{{ tailscale_config.port }}'
+	option fw_mode 'nftables'
+	option log_stdout '1'
+	option log_stderr '1'

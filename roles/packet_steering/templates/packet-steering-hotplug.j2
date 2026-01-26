@@ -1,0 +1,43 @@
+#!/bin/sh
+# Configure packet steering when interfaces come up
+# Uses 99- prefix to run after OpenWrt's default scripts
+
+[ "$ACTION" = "add" ] || [ "$ACTION" = "ifup" ] || exit 0
+
+set_irq_affinity() {
+    local iface="$1"
+    local affinity="$2"
+    for irq in $(grep "${iface}" /proc/interrupts | awk -F: '{print $1}' | tr -d ' '); do
+        [ -n "$irq" ] && [ -f "/proc/irq/$irq/smp_affinity" ] && \
+            echo "$affinity" > /proc/irq/$irq/smp_affinity 2>/dev/null
+    done
+}
+
+set_rps() {
+    local iface="$1"
+    local cpus="$2"
+    for queue in /sys/class/net/$iface/queues/rx-*/rps_cpus; do
+        [ -f "$queue" ] && echo "$cpus" > "$queue" 2>/dev/null
+    done
+    for queue in /sys/class/net/$iface/queues/rx-*/rps_flow_cnt; do
+        [ -f "$queue" ] && echo 4096 > "$queue" 2>/dev/null
+    done
+}
+
+case "$DEVICE" in
+    {{ network_interfaces.wan }})
+        # WAN: IRQ on CPU 4, RPS on CPU 6
+        set_irq_affinity "{{ network_interfaces.wan }}" "10"
+        set_rps "{{ network_interfaces.wan }}" "40"
+        ;;
+    {{ network_interfaces.lan_trunk }})
+        # LAN trunk: IRQ on CPU 5, RPS on CPU 7
+        set_irq_affinity "{{ network_interfaces.lan_trunk }}" "20"
+        set_rps "{{ network_interfaces.lan_trunk }}" "80"
+        ;;
+    {{ network_interfaces.mgmt }})
+        # Management: IRQ on CPU 0, RPS on CPUs 1-3
+        set_irq_affinity "{{ network_interfaces.mgmt }}" "01"
+        set_rps "{{ network_interfaces.mgmt }}" "0e"
+        ;;
+esac

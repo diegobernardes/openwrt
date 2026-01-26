@@ -1,0 +1,20 @@
+---
+- name: Install packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - python3
+
+- name: Check if root password is set
+  ansible.builtin.shell: grep -q '^root:\$' /etc/shadow
+  register: bootstrap_password_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Set root password
+  ansible.builtin.shell: |
+    # passwd requires the password twice for confirmation.
+    printf '%s\n%s\n' {{ router_password | quote }} {{ router_password | quote }} | passwd root
+  no_log: true
+  when: bootstrap_password_check.rc != 0

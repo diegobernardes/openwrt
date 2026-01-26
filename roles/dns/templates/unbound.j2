@@ -1,0 +1,66 @@
+config unbound 'ub_main'
+	# Use UCI-generated config with custom extensions.
+	option manual_conf '0'
+
+	# Domain settings.
+	option domain 'lan'
+	option domain_type 'static'
+	list domain_insecure 'lan'
+	list domain_insecure 'internal'
+
+	# Network settings.
+	option protocol 'ip4_only'
+	option interface_auto '0'
+{% set lan_vlans = network_vlans | selectattr('dhcp_start', 'defined') | list %}
+{% for vlan in lan_vlans %}
+	list iface_lan '{{ vlan.name }}'
+{% endfor %}
+
+	# Trigger interfaces. Restart unbound when these come up.
+	list iface_trig 'wan'
+{% for vlan in lan_vlans %}
+	list iface_trig '{{ vlan.name }}'
+{% endfor %}
+	list iface_wan 'wan'
+
+	# Security settings.
+	option validator '1'
+	option validator_ntp '1'
+	option hide_binddata '1'
+	option localservice '1'
+	option rebind_protection '1'
+	option rebind_localhost '1'
+	option query_minimize '1'
+
+	# Resource settings.
+	option num_threads '4'
+	option verbosity '1'
+	option extended_stats '1'
+	option ttl_min '60'
+	option edns_size '1232'
+
+	# Do not integrate with DHCP.
+	option dhcp_link 'none'
+	option add_local_fqdn '0'
+	option add_wan_fqdn '0'
+	option add_extra_dns '0'
+
+	# Enable unbound-control for runtime management and statistics.
+	option unbound_control '1'
+
+	# Root key age for DNSSEC (days before UCI saves an updated root.key to flash).
+	# UCI copies /etc/unbound/root.key → /var/lib/unbound/ at every boot via unbound.sh,
+	# so the key survives reboots.
+	# UCI will persist an updated key to flash after 9 days.
+	option root_age '9'
+
+config zone 'forward_dot'
+	option enabled '1'
+	option zone_type 'forward_zone'
+	list zone_name '.'
+	option fallback '0'
+	option tls_upstream '1'
+	option tls_port '853'
+	option tls_index 'dns.quad9.net'
+	list server '9.9.9.9'
+	list server '149.112.112.112'

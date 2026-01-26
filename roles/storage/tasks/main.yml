@@ -1,0 +1,59 @@
+---
+- name: Install packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - parted
+      - losetup
+      - resize2fs
+
+- name: Deploy resize script
+  ansible.builtin.copy:
+    src: resize-root
+    dest: /usr/sbin/resize-root
+    mode: "0755"
+
+- name: Detect root device
+  ansible.builtin.command: /usr/sbin/resize-root --detect
+  register: storage_root_device
+  changed_when: false
+
+- name: Apply fstab configuration
+  register: storage_fstab
+  ansible.builtin.template:
+    src: fstab.j2
+    dest: /etc/config/fstab
+    mode: "0644"
+
+- name: Expand partition
+  ansible.builtin.command: /usr/sbin/resize-root
+  register: storage_expand_partition
+  changed_when: storage_expand_partition.stdout == 'reboot'
+
+- name: Reboot after partition resize
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+    reboot_command: reboot
+    test_command: uptime
+  when: storage_expand_partition.stdout == 'reboot'
+
+- name: Expand filesystem
+  ansible.builtin.command: /usr/sbin/resize-root
+  register: storage_expand_filesystem
+  changed_when: storage_expand_filesystem.stdout == 'reboot'
+
+- name: Reboot after filesystem resize
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+    reboot_command: reboot
+    test_command: uptime
+  when: storage_expand_filesystem.stdout == 'reboot'
+
+- name: Reboot to apply fstab
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+    reboot_command: reboot
+    test_command: uptime
+  when:
+    - storage_fstab.changed
+    - (storage_expand_partition.stdout != 'reboot') and (storage_expand_filesystem.stdout != 'reboot')

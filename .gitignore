@@ -1,0 +1,9 @@
+# Ansible working directory.
+/.ansible
+
+# Vault password file.
+/.vault_pass
+
+# Temporary files.
+/tmp
+/playbooks/role-*.yml

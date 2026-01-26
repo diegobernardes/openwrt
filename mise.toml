@@ -1,0 +1,5 @@
+[tools]
+"pipx:ansible-core" = { version = "2.20.3", uvx_args = "--with ansible==13.4.0 --with netaddr" }
+"pipx:ansible-lint" = "26.1.1"
+"pipx:yamllint" = "1.38.0"
+task = "3.48.0"

@@ -1,0 +1,6 @@
+---
+- name: Restart adblock-fast
+  ansible.builtin.service:
+    name: adblock-fast
+    state: restarted
+  listen: restart adblock-fast

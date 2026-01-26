@@ -1,0 +1,28 @@
+---
+extends: default
+rules:
+  line-length:
+    max: 120
+    level: warning
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no']
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+  comments-indentation: false
+  indentation:
+    spaces: 2
+    indent-sequences: true
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+ignore: |
+  .git/
+  group_vars/all/vault.yml

@@ -1,0 +1,7 @@
+---
+- name: Restart trunk-carrier-detect
+  ansible.builtin.service:
+    name: trunk-carrier-detect
+    state: restarted
+  listen: restart trunk-carrier-detect
+  when: not network_config.changed

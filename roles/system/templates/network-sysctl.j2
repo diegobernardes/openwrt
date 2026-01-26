@@ -1,0 +1,113 @@
+# =============================================================================
+# Connection Tracking
+# =============================================================================
+# Max tracked connections (default ~16384)
+# Each entry ~300 bytes, 262144 = ~80MB RAM
+net.netfilter.nf_conntrack_max = 262144
+
+# TCP established timeout (default 432000 = 5 days → 2 hours)
+net.netfilter.nf_conntrack_tcp_timeout_established = 7200
+
+# TCP TIME_WAIT (default 120 → 30 seconds)
+net.netfilter.nf_conntrack_tcp_timeout_time_wait = 30
+
+# UDP stream timeout (IoT devices are chatty with UDP)
+net.netfilter.nf_conntrack_udp_timeout_stream = 120
+
+# ICMP timeout (default 30 → 10 seconds)
+net.netfilter.nf_conntrack_icmp_timeout = 10
+
+# Generic timeout for protocols without specific timeout (default 600 → 120)
+net.netfilter.nf_conntrack_generic_timeout = 120
+
+# =============================================================================
+# TCP/IP Performance (1Gbps WAN / 2.5Gbps LAN trunk)
+# =============================================================================
+# Increase socket buffer sizes (32MB max)
+net.core.rmem_max = 33554432
+net.core.wmem_max = 33554432
+
+# TCP buffer auto-tuning (min, default, max)
+net.ipv4.tcp_rmem = 4096 87380 33554432
+net.ipv4.tcp_wmem = 4096 65536 33554432
+
+# TCP congestion control - BBR optimizes for both throughput and latency
+# Works well alongside SQM/CAKE for bufferbloat control
+net.ipv4.tcp_congestion_control = bbr
+
+# TCP Fast Open - client-only mode (benefits outbound DNS/SSH connections)
+net.ipv4.tcp_fastopen = 1
+
+# TCP keepalive - faster detection of dead connections
+net.ipv4.tcp_keepalive_time = 600
+net.ipv4.tcp_keepalive_intvl = 30
+net.ipv4.tcp_keepalive_probes = 5
+
+# =============================================================================
+# Security Hardening
+# =============================================================================
+# Ignore ICMP redirects (prevent MITM attacks)
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.send_redirects = 0
+net.ipv4.conf.default.send_redirects = 0
+net.ipv6.conf.all.accept_redirects = 0
+net.ipv6.conf.default.accept_redirects = 0
+
+# Loose reverse-path filtering (required for Tailscale subnet routing)
+# Strict mode (1) drops packets where the source IP is not reachable via the
+# same interface they arrived on. Tailscale routes traffic through tailscale0
+# with asymmetric paths, triggering false-positive drops under strict mode.
+# conf.all uses MAX semantics, so all=1 cannot be overridden per-interface.
+# Loose mode (2) still rejects completely unreachable source IPs.
+net.ipv4.conf.all.rp_filter = 2
+net.ipv4.conf.default.rp_filter = 2
+
+# Reject source-routed packets (allows sender to dictate routing path)
+net.ipv4.conf.all.accept_source_route = 0
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv6.conf.all.accept_source_route = 0
+net.ipv6.conf.default.accept_source_route = 0
+
+# Log packets with impossible source addresses (spoofing detection)
+net.ipv4.conf.all.log_martians = 1
+net.ipv4.conf.default.log_martians = 1
+
+# SYN flood protection
+net.ipv4.tcp_syncookies = 1
+
+# Never accept Router Advertisements. This device IS the router
+net.ipv6.conf.all.accept_ra = 0
+net.ipv6.conf.default.accept_ra = 0
+
+# =============================================================================
+# Network Buffer Defaults
+# =============================================================================
+# Socket option memory max
+net.core.optmem_max = 524288
+
+# =============================================================================
+# Network Queue Tuning
+# =============================================================================
+# Network device backlog - packets waiting to be processed
+net.core.netdev_max_backlog = 10000
+
+# =============================================================================
+# Local Port Range
+# =============================================================================
+# Port range for outgoing connections
+net.ipv4.ip_local_port_range = 10000 65535
+
+# =============================================================================
+# UDP Specific
+# =============================================================================
+# Per-socket UDP buffer sizes
+net.ipv4.udp_rmem_min = 131072
+net.ipv4.udp_wmem_min = 131072
+
+# =============================================================================
+# TCP Tuning
+# =============================================================================
+# Increase SYN backlog
+net.ipv4.tcp_max_syn_backlog = 4096
+net.core.somaxconn = 4096

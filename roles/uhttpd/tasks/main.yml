@@ -1,0 +1,14 @@
+---
+- name: Install uhttpd packages
+  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
+  vars:
+    packages:
+      - uhttpd
+      - uhttpd-mod-ubus
+
+- name: Install uhttpd config
+  ansible.builtin.template:
+    src: uhttpd.j2
+    dest: /etc/config/uhttpd
+    mode: "0644"
+  notify: restart uhttpd

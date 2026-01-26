@@ -1,0 +1,6 @@
+#!/bin/sh
+
+[ "$ACTION" = "ifup" ] || exit 0
+[ "$INTERFACE" = "{{ network_interfaces.wan }}" ] || exit 0
+
+ethtool -K {{ network_interfaces.wan }} rx-udp-gro-forwarding on

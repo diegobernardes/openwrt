@@ -1,0 +1,21 @@
+config pool 'pool_ntp_org'
+	option hostname 'pool.ntp.org'
+	option maxpoll '10'
+	option iburst 'yes'
+
+config dhcp_ntp 'dhcp_ntp'
+	option enabled '0'
+
+config makestep 'makestep'
+	option threshold '1.0'
+	option limit '3'
+
+{% for vlan in network_vlans %}
+{% if vlan.dhcp_start is defined %}
+config allow '{{ vlan.name }}'
+	list subnet '{{ vlan.subnet }}'
+{% endif %}
+{% endfor %}
+
+config allow 'tailscale'
+	list subnet '{{ tailscale_config.subnet }}'

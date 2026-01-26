@@ -1,0 +1,6 @@
+---
+- name: Restart watchcat
+  ansible.builtin.service:
+    name: watchcat
+    state: restarted
+  listen: restart watchcat
