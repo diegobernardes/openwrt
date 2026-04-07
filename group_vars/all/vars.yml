@@ -89,13 +89,9 @@ network_vlans:
       masq: true
 
 dhcp_static_hosts:
-  - name: server
-    mac: "{{ vault_mac_server }}"
-    ip: 172.31.20.2
-
-  - name: nas
-    mac: "{{ vault_mac_nas }}"
-    ip: 172.31.20.3
+  - name: switch
+    mac: "{{ vault_mac_switch }}"
+    ip: 172.31.11.2
 
   - name: ap-bedroom
     mac: "{{ vault_mac_ap_bedroom }}"
@@ -108,6 +104,14 @@ dhcp_static_hosts:
   - name: ap-office
     mac: "{{ vault_mac_ap_office }}"
     ip: 172.31.11.5
+
+  - name: server
+    mac: "{{ vault_mac_server }}"
+    ip: 172.31.20.2
+
+  - name: nas
+    mac: "{{ vault_mac_nas }}"
+    ip: 172.31.20.3
 
   - name: mobile-1
     mac: "{{ vault_mac_mobile_1 }}"
