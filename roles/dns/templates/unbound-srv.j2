@@ -50,6 +50,14 @@ max-client-subnet-ipv4: 0
 max-client-subnet-ipv6: 0
 
 # =============================================================================
+# INTERFACE BINDINGS
+# =============================================================================
+# Bind to all interfaces so Unbound answers on every LAN IP.
+# Without this, Unbound defaults to 127.0.0.1 only.
+# Access is still restricted by the access-control rules below.
+interface: 0.0.0.0
+
+# =============================================================================
 # ACCESS CONTROL
 # =============================================================================
 # Default deny, then allow our networks
