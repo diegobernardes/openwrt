@@ -5,11 +5,11 @@ network_interfaces:
   mgmt: eth0
 
 network_vlans:
-  - id: 11
+  - id: 10
     name: management
-    subnet: 172.31.11.0/24
-    router_ip: 172.31.11.1
-    dhcp_start: 172.31.11.100
+    subnet: 172.31.10.0/24
+    router_ip: 172.31.10.1
+    dhcp_start: 172.31.10.100
     dhcp_limit: 150
     bridge: true
     firewall:
@@ -91,19 +91,19 @@ network_vlans:
 dhcp_static_hosts:
   - name: switch
     mac: "{{ vault_mac_switch }}"
-    ip: 172.31.11.2
+    ip: 172.31.10.2
 
   - name: ap-bedroom
     mac: "{{ vault_mac_ap_bedroom }}"
-    ip: 172.31.11.3
+    ip: 172.31.10.3
 
   - name: ap-living-room
     mac: "{{ vault_mac_ap_living_room }}"
-    ip: 172.31.11.4
+    ip: 172.31.10.4
 
   - name: ap-office
     mac: "{{ vault_mac_ap_office }}"
-    ip: 172.31.11.5
+    ip: 172.31.10.5
 
   - name: server
     mac: "{{ vault_mac_server }}"
