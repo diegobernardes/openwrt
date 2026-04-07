@@ -30,3 +30,9 @@
     dest: /etc/sysctl.conf
     mode: "0644"
   notify: apply sysctl settings
+
+- name: Deploy sysupgrade preserve list
+  ansible.builtin.template:
+    src: sysupgrade.j2
+    dest: /etc/sysupgrade.conf
+    mode: "0644"

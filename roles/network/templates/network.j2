@@ -36,9 +36,9 @@ config device
 # VLAN {{ vlan.id }} - {{ vlan.name }}
 config device
 	option type '8021q'
-	option device '{{ network_interfaces.lan_trunk }}'
-	option vid '{{ vlan.id }}'
 	option name '{{ network_interfaces.lan_trunk }}.{{ vlan.id }}'
+	option ifname '{{ network_interfaces.lan_trunk }}'
+	option vid '{{ vlan.id }}'
 
 {% if vlan.bridge | default(false) %}
 # Bridge: merges untagged {{ network_interfaces.mgmt }} with the

@@ -12,18 +12,6 @@
     dest: /etc/hotplug.d/net/20-udp-gro
     mode: "0755"
 
-- name: Install trunk carrier-detect init script
-  ansible.builtin.template:
-    src: trunk-carrier-detect.j2
-    dest: /etc/init.d/trunk-carrier-detect
-    mode: "0755"
-  notify: restart trunk-carrier-detect
-
-- name: Enable trunk carrier-detect service
-  ansible.builtin.service:
-    name: trunk-carrier-detect
-    enabled: true
-
 - name: Reboot if network config changed # noqa: no-handler
   when: network_config.changed
   block:
