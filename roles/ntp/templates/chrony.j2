@@ -13,9 +13,6 @@ config makestep 'makestep'
 {% for vlan in network_vlans %}
 {% if vlan.dhcp_start is defined %}
 config allow '{{ vlan.name }}'
-	list subnet '{{ vlan.subnet }}'
+	option interface '{{ vlan.name }}'
 {% endif %}
 {% endfor %}
-
-config allow 'tailscale'
-	list subnet '{{ tailscale_config.subnet }}'

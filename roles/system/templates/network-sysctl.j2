@@ -72,6 +72,9 @@ net.ipv6.conf.default.accept_source_route = 0
 # Log packets with impossible source addresses (spoofing detection)
 net.ipv4.conf.all.log_martians = 1
 net.ipv4.conf.default.log_martians = 1
+# Suppress martian logging on WAN — CGNAT (100.64.x.x) causes expected
+# routing asymmetry that triggers false-positive martian warnings.
+net.ipv4.conf.eth1.log_martians = 0
 
 # SYN flood protection
 net.ipv4.tcp_syncookies = 1
