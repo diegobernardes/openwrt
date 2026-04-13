@@ -96,6 +96,15 @@ val-log-level: 1
 log-servfail: yes
 
 # =============================================================================
+# PRIVATE DOMAINS
+# =============================================================================
+# Domains allowed to resolve to private (RFC1918) IPs, bypassing rebind
+# protection. Used for corporate domains reached through the VPN.
+{% for domain in dns_private_domains %}
+private-domain: "{{ domain }}"
+{% endfor %}
+
+# =============================================================================
 # LOCAL ZONES AND RECORDS
 # =============================================================================
 include: /etc/unbound/local-data.conf

@@ -128,6 +128,10 @@ dns_local_records:
   - name: isp-router.internal
     ip: 172.31.70.2
 
+# Domains allowed to resolve to private (RFC1918) IPs, bypassing rebind
+# protection. Used for corporate domains reached through the VPN.
+dns_private_domains: "{{ vault_dns_private_domains }}"
+
 network_isp_admin:
   target_ip: 192.168.1.1
   nat_ip: 172.31.70.2
