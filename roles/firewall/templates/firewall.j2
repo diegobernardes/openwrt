@@ -323,6 +323,23 @@ config rule
 	option limit '100/sec'
 
 # =============================================================================
+# CUSTOM RULES
+# =============================================================================
+{% for rule in firewall_custom_rules | default([]) %}
+config rule
+	option name '{{ rule.name }}'
+	option src '{{ rule.src }}'
+{% for ip in rule.src_ip %}
+	list src_ip '{{ ip }}'
+{% endfor %}
+	option dest '{{ rule.dest }}'
+	option dest_ip '{{ rule.dest_ip }}'
+	option dest_port '{{ rule.dest_port }}'
+	option proto '{{ rule.proto }}'
+	option target 'ACCEPT'
+
+{% endfor %}
+# =============================================================================
 # FIREWALL LOGGING
 # Log dropped/rejected packets from WAN for security monitoring
 # View logs: logread | grep FW-DROP

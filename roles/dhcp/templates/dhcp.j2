@@ -18,6 +18,9 @@ config dhcp '{{ vlan.name }}'
 	list dhcp_option '6,{{ vlan.router_ip }}'
 	# NTP server (option 42).
 	list dhcp_option '42,{{ vlan.router_ip }}'
+{% for opt in vlan.dhcp_extra_options | default([]) %}
+	list dhcp_option '{{ opt.value }}' # {{ opt.comment }}
+{% endfor %}
 
 {% endfor %}
 {% for host in dhcp_static_hosts %}

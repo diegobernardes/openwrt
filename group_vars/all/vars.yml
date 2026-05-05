@@ -16,6 +16,9 @@ network_vlans:
       input: accept
       forward: drop
       forward_to: [wan, isp_admin]
+    dhcp_extra_options:
+      - value: "138,172.31.20.101"
+        comment: "Omada controller discovery (option 138 = CAPWAP controller IP)"
 
   - id: 20
     name: server
@@ -174,5 +177,22 @@ uhttpd_config:
   listen_vlans:
     - management
     - trusted
+
+firewall_custom_rules:
+  - name: ap-to-omada-discovery
+    src: management
+    src_ip: [172.31.10.3, 172.31.10.4, 172.31.10.5]
+    dest: server
+    dest_ip: 172.31.20.101
+    dest_port: "29810"
+    proto: udp
+
+  - name: ap-to-omada-management
+    src: management
+    src_ip: [172.31.10.3, 172.31.10.4, 172.31.10.5]
+    dest: server
+    dest_ip: 172.31.20.101
+    dest_port: "29811 29812 29813 29814 29815 29816 29817"
+    proto: tcp
 
 router_password: "{{ vault_router_password }}"
