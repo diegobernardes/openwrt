@@ -30,6 +30,11 @@ tasks:
         ansible-playbook playbooks/apply.yml {{ if ne .TARGET "auto" }}-e "target={{.TARGET}}"{{ end }} {{.CLI_ARGS}}
         {{end}}
 
+  setup:
+    desc: Install Ansible dependencies (run once before first use)
+    cmds:
+      - ansible-galaxy collection install -r requirements.yml
+
   lint:
     desc: Run linting checks on playbooks and configs
     cmds:

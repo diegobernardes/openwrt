@@ -1,0 +1,5 @@
+---
+collections:
+  - name: community.general
+    version: "==12.6.0"
+  - name: ansible.utils

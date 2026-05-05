@@ -21,7 +21,8 @@ Would I do it again? Yes!<br>
    echo "your-secure-password" > .vault_pass
    chmod 600 .vault_pass
    ```
-2. Run `task apply`
+2. Run `task setup` (once, to install Ansible collections)
+3. Run `task apply`
 
    | Parameter | Description |
    |-----------|-------------|
