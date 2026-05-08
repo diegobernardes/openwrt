@@ -4,31 +4,8 @@ tasks:
   apply:
     desc: Apply config to router (TARGET=auto|router|router_factory, ROLE=<role> for single role, -- for extra args)
     silent: true
-    vars:
-      TARGET: '{{.TARGET | default "auto"}}'
-      ROLE: '{{.ROLE | default ""}}'
-    requires:
-      vars:
-        - name: TARGET
-          enum: [auto, router, router_factory]
     cmds:
-      - |
-        {{if .ROLE}}
-        TMPFILE=$(mktemp {{.ROOT_DIR}}/playbooks/role-XXXXXX.yml)
-        cat > "$TMPFILE" <<EOF
-        ---
-        - name: Detect router
-          hosts: localhost
-          roles: [detect]
-        - name: {{.ROLE}}
-          hosts: target_router
-          roles: [{{.ROLE}}]
-        EOF
-        ansible-playbook "$TMPFILE" {{ if ne .TARGET "auto" }}-e "target={{.TARGET}}"{{ end }} {{.CLI_ARGS}}
-        rm -f "$TMPFILE"
-        {{else}}
-        ansible-playbook playbooks/apply.yml {{ if ne .TARGET "auto" }}-e "target={{.TARGET}}"{{ end }} {{.CLI_ARGS}}
-        {{end}}
+      - scripts/apply.sh {{.CLI_ARGS}}
 
   setup:
     desc: Install Ansible dependencies (run once before first use)
