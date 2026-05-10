@@ -22,15 +22,6 @@
   changed_when: dns_dnssec_anchor.rc == 1
   failed_when: dns_dnssec_anchor.rc not in [0, 1]
 
-# This is required to start unbound.
-- name: Create Unbound adblock config stub
-  ansible.builtin.file:
-    path: /etc/unbound/unbound_adblock.conf
-    state: touch
-    mode: "0644"
-    modification_time: preserve
-    access_time: preserve
-
 - name: Install Unbound config files
   ansible.builtin.template:
     src: "{{ item.src }}"

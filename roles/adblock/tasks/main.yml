@@ -24,21 +24,6 @@
     mode: "0644"
   notify: restart adblock-fast
 
-- name: Install Unbound adblock placeholder init script
-  ansible.builtin.template:
-    src: unbound-adblock-placeholder.j2
-    dest: /etc/init.d/unbound-adblock-placeholder
-    mode: "0755"
-
-- name: Enable Unbound adblock placeholder service
-  ansible.builtin.service:
-    name: unbound-adblock-placeholder
-    enabled: true
-
-- name: Run placeholder now (ensure adblock tmpfs list file exists for Unbound)
-  ansible.builtin.raw: /etc/init.d/unbound-adblock-placeholder start
-  changed_when: false
-
 - name: Enable adblock-fast service
   ansible.builtin.service:
     name: adblock-fast
