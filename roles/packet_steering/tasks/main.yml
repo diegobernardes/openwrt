@@ -1,10 +1,12 @@
 ---
 # Disable OpenWrt's default IRQ affinity hotplug to avoid conflicting with our custom script.
 - name: Disable 40-net-smp-affinity hotplug script
-  ansible.builtin.command: mv /etc/hotplug.d/net/40-net-smp-affinity /etc/hotplug.d/net/40-net-smp-affinity.disabled
-  args:
-    creates: /etc/hotplug.d/net/40-net-smp-affinity.disabled
-    removes: /etc/hotplug.d/net/40-net-smp-affinity
+  ansible.builtin.copy:
+    content: |
+      #!/bin/sh
+      # Disabled - custom packet steering handles IRQ affinity
+    dest: /etc/hotplug.d/net/40-net-smp-affinity
+    mode: "0755"
 
 # Use 99-packet-steering to ensure it runs after any other scripts
 - name: Install packet steering hotplug script

@@ -1,12 +1,4 @@
 ---
-- name: Install packages
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - parted
-      - losetup
-      - resize2fs
-
 - name: Deploy resize script
   ansible.builtin.copy:
     src: resize-root

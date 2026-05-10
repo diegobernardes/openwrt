@@ -1,15 +1,4 @@
 ---
-- name: Install adblock-fast
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - adblock-fast
-      - luci-app-adblock-fast
-      - gawk
-      - grep
-      - sed
-      - coreutils-sort
-
 - name: Install adblock-fast config
   ansible.builtin.template:
     src: adblock-fast.j2

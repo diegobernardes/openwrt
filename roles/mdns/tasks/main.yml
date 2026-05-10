@@ -1,11 +1,4 @@
 ---
-- name: Install avahi packages
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - avahi-dbus-daemon
-      - avahi-utils
-
 - name: Ensure avahi config directory exists
   ansible.builtin.file:
     path: /etc/avahi
