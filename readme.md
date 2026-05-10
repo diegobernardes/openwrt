@@ -16,23 +16,13 @@ Would I do it again? Yes!<br>
 - [mise](https://mise.jdx.dev) - At the first run execute `mise install` to bring all dependencies into scope.
 
 ## Quick Start
-1. Define a `.vault_pass` at the root of the project with the vault password:
-   ```bash
-   echo "your-secure-password" > .vault_pass
-   chmod 600 .vault_pass
-   ```
-2. Run `task setup` (once, to install Ansible collections)
-3. Run `task apply`
-
-   | Parameter | Description |
-   |-----------|-------------|
-   | `TARGET=router\|router_factory` | Target device. Inferred if not set |
-   | `ROLE=<role>` | Single role to execute. All roles if omitted |
-
-   Extra ansible args can be passed after `--`.
+1. Flash the router — see [Firmware](docs/firmware.md) for building and flashing the image.
+2. Create a `.vault_pass` file at the root containing the vault password, with permissions `600`.
+3. Run `task setup` (once, to install Ansible collections)
+4. Run `task apply`
 
 ## Documentation
 | Document | Description |
 |----------|-------------|
-| [Bootstrap](docs/bootstrap.md) | Initial device setup and provisioning |
+| [Firmware](docs/firmware.md) | Building, flashing, and upgrading the firmware |
 | [Improvements](docs/improvements.md) | Planned enhancements |
