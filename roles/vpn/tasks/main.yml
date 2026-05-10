@@ -1,10 +1,4 @@
 ---
-- name: Install tailscale package
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - tailscale
-
 - name: Install tailscale config
   ansible.builtin.template:
     src: tailscale.j2

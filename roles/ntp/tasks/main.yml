@@ -1,11 +1,4 @@
 ---
-- name: Install chrony package
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - chrony
-      - luci-app-chrony
-
 - name: Install chrony configuration
   ansible.builtin.template:
     src: chrony.j2

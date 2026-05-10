@@ -1,13 +1,4 @@
 ---
-- name: Install DNS packages
-  ansible.builtin.include_tasks: "{{ playbook_dir }}/../tasks/install-package.yml"
-  vars:
-    packages:
-      - unbound-daemon
-      - unbound-control
-      - unbound-anchor
-      - luci-app-unbound
-
 - name: Create DNS directory
   ansible.builtin.file:
     path: /etc/unbound
