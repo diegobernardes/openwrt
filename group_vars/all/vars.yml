@@ -152,17 +152,17 @@ sqm_upload: 950000 # 950 Mbit/s
 connectivity_check_host_a: "9.9.9.9"
 connectivity_check_host_b: "149.112.112.112"
 
-watchcat_config:
+watchdog_config:
   pingperiod: 30s
   forcedelay: 3m
 
-avahi_mdns_reflect_vlans:
+mdns_reflect_vlans:
   - trusted
   - server
   - iot
   - shared
 
-tailscale_config:
+vpn_config:
   auth_key_enabled: true
   exit_node: true
   port: 41641
@@ -171,7 +171,7 @@ tailscale_config:
     - trusted
     - server
 
-uhttpd_config:
+webui_config:
   http_port: 80
   https_port: 443
   listen_vlans:

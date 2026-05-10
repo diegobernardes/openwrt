@@ -34,9 +34,9 @@
 
 - name: Configure tailscale
   vars:
-    _vlans: "{{ network_vlans | selectattr('name', 'in', tailscale_config.allowed_vlans) | map(attribute='subnet') }}"
+    _vlans: "{{ network_vlans | selectattr('name', 'in', vpn_config.allowed_vlans) | map(attribute='subnet') }}"
     _routes: "{{ _vlans | join(',') }}"
-    _exit_node: "{{ '--advertise-exit-node' if tailscale_config.exit_node else '' }}"
+    _exit_node: "{{ '--advertise-exit-node' if vpn_config.exit_node else '' }}"
   ansible.builtin.raw: >-
     tailscale up
     --auth-key=file:/etc/tailscale/authkey

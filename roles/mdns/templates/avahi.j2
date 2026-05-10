@@ -9,7 +9,7 @@ use-ipv6=no
 #   bridged VLANs -> br-<vlan_name> (bridge)
 #   all other VLANs -> <lan_trunk>.<vlan_id> (tagged sub-interface)
 {% set ifaces = [] %}
-{% for vlan in network_vlans | selectattr('name', 'in', avahi_mdns_reflect_vlans) %}
+{% for vlan in network_vlans | selectattr('name', 'in', mdns_reflect_vlans) %}
 {%   if vlan.bridge | default(false) %}
 {%     set _ = ifaces.append('br-' ~ vlan.name) %}
 {%   else %}

@@ -22,11 +22,11 @@
   hosts: target_router
   roles:
     - adblock
-    - watchcat
+    - watchdog
     - ntp
-    - avahi
-    - tailscale
-    - uhttpd
+    - mdns
+    - vpn
+    - webui
     - packet_steering
     - sqm
     - system

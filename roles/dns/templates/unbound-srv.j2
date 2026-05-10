@@ -70,7 +70,7 @@ access-control: ::1/128 allow
 access-control: {{ vlan.subnet }} allow
 {% endif %}
 {% endfor %}
-access-control: {{ tailscale_config.subnet }} allow
+access-control: {{ vpn_config.subnet }} allow
 
 # =============================================================================
 # SECURITY HARDENING

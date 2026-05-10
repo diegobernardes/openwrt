@@ -82,7 +82,7 @@ config rule
 # Allow mDNS (UDP 5353) for Avahi reflector to work across VLANs
 # Only enabled for VLANs listed in firewall_mdns_vlans
 # =============================================================================
-{% for vlan_name in avahi_mdns_reflect_vlans %}
+{% for vlan_name in mdns_reflect_vlans %}
 {% set vlan = network_vlans | selectattr('name', 'equalto', vlan_name) | first %}
 {% if vlan.firewall.input != 'accept' %}
 config rule
@@ -260,7 +260,7 @@ config redirect
 # =============================================================================
 # TAILSCALE VPN
 # Zone and forwarding rules for Tailscale interface
-# Tailscale can access: {{ tailscale_config.allowed_vlans | join(', ') }}
+# Tailscale can access: {{ vpn_config.allowed_vlans | join(', ') }}
 # =============================================================================
 config zone
 	option name 'tailscale'
@@ -288,7 +288,7 @@ config rule
 config rule
 	option name 'tailscale-to-router-https'
 	option src 'tailscale'
-	option dest_port '{{ uhttpd_config.https_port | default(443) }}'
+	option dest_port '{{ webui_config.https_port | default(443) }}'
 	option proto 'tcp'
 	option target 'ACCEPT'
 	option limit '50/sec'
@@ -307,7 +307,7 @@ config forwarding
 	option dest 'wan'
 
 # Tailscale can reach allowed VLANs only
-{% for vlan in network_vlans if vlan.name in tailscale_config.allowed_vlans %}
+{% for vlan in network_vlans if vlan.name in vpn_config.allowed_vlans %}
 config forwarding
 	option src 'tailscale'
 	option dest '{{ vlan.name }}'
@@ -317,7 +317,7 @@ config forwarding
 config rule
 	option name 'Allow-Tailscale'
 	option src 'wan'
-	option dest_port '{{ tailscale_config.port }}'
+	option dest_port '{{ vpn_config.port }}'
 	option proto 'udp'
 	option target 'ACCEPT'
 	option limit '100/sec'

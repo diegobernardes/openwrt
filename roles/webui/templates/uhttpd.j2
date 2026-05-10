@@ -1,8 +1,8 @@
 config uhttpd 'main'
 {% for vlan in network_vlans %}
-{% if vlan.name in uhttpd_config.listen_vlans %}
-	list listen_http '{{ vlan.router_ip }}:{{ uhttpd_config.http_port }}'
-	list listen_https '{{ vlan.router_ip }}:{{ uhttpd_config.https_port }}'
+{% if vlan.name in webui_config.listen_vlans %}
+	list listen_http '{{ vlan.router_ip }}:{{ webui_config.http_port }}'
+	list listen_https '{{ vlan.router_ip }}:{{ webui_config.https_port }}'
 {% endif %}
 {% endfor %}
 	option redirect_https '1'
