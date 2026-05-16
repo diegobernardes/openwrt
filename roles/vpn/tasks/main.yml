@@ -37,5 +37,6 @@
     --advertise-routes={{ _routes }}
     {{ _exit_node }}
     --timeout=30s
+    --hostname={{ system_hostname }}
   no_log: true
   changed_when: false
