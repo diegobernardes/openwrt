@@ -127,8 +127,6 @@ dns_adblock:
   blocklists:
     - https://cdn.jsdelivr.net/gh/StevenBlack/hosts/hosts
 
-
-
 # Domains allowed to resolve to private (RFC1918) IPs, bypassing rebind
 # protection. Used for corporate domains reached through the VPN.
 dns_private_domains: "{{ vault_dns_private_domains }}"
@@ -193,6 +191,14 @@ firewall_custom_rules:
     dest: server
     dest_ip: 172.31.20.101
     dest_port: "29811 29812 29813 29814 29815 29816 29817"
+    proto: tcp
+
+  - name: ap-to-omada-upgrade
+    src: management
+    src_ip: [172.31.10.3, 172.31.10.4, 172.31.10.5]
+    dest: server
+    dest_ip: 172.31.20.101
+    dest_port: "8043"
     proto: tcp
 
 router_password: "{{ vault_router_password }}"
