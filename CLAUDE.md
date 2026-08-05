@@ -5,7 +5,7 @@ Personal Ansible project configuring a **NanoPi R6S** as an OpenWrt router. Sing
 NanoPi R6S — `rockchip/armv8`, OpenWrt profile `friendlyarm_nanopi-r6s`.
 
 ## Entrypoints
-All commands go through `task` (see `taskfile.yml`); tool versions are pinned in `mise.toml`.
+All commands go through `task` (see `taskfile.yml`); the dev toolchain is pinned by Nix (`flake.nix` + `flake.lock`) and loaded via direnv (`.envrc` → `use flake`) or `nix develop`. Ansible collections are **not** in Nix — they're installed by `task setup` via `ansible-galaxy` (`requirements.yml`).
 
 - `task apply` — full playbook; `detect` auto-picks `router` (172.31.10.1) vs `router_factory` (192.168.1.1).
 - `ROLE=<name> task apply` — apply a single role.

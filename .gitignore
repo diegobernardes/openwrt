@@ -1,6 +1,9 @@
 # Ansible working directory.
 /.ansible
 
+# direnv / nix-direnv cache.
+/.direnv
+
 # Vault password file.
 /.vault_pass
 

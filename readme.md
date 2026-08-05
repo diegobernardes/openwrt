@@ -13,7 +13,10 @@ It's overkill? Yes.<br>
 Would I do it again? Yes!<br>
 
 ## Prerequisites
-- [mise](https://mise.jdx.dev) - At the first run execute `mise install` to bring all dependencies into scope.
+- [Nix](https://nixos.org) with flakes enabled — provides the pinned dev toolchain (`flake.nix` + `flake.lock`).
+- [direnv](https://direnv.net) with [nix-direnv](https://github.com/nix-community/nix-direnv) — run `direnv allow` once and the toolchain loads automatically whenever you `cd` into the repo. Without direnv, run `nix develop` to enter the dev shell manually.
+
+Ansible collections are not managed by Nix — run `task setup` once (see below) to install them via `ansible-galaxy`.
 
 ## Quick Start
 1. Flash the router — see [Firmware](docs/firmware.md) for building and flashing the image.
