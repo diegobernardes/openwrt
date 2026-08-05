@@ -30,11 +30,16 @@ tasks:
       - ansible-vault edit group_vars/all/vault.yml
 
   firmware:
-    desc: Build and download a custom OpenWrt image
+    desc: Build a custom OpenWrt image locally via Nix
     summary: |
       Target: rockchip/armv8 — FriendlyARM NanoPi R6S
 
-      Environment variables:
-        VERSION  OpenWrt release to build (required)
+      Builds the image with the OpenWrt ImageBuilder in a pinned Nix
+      derivation (release + package list live in flake.nix), then copies the
+      ext4 sysupgrade image into firmware/. No network build service.
     cmds:
-      - scripts/firmware-build.sh
+      - nix build .#packages.x86_64-linux.firmware --out-link result
+      - mkdir -p firmware
+      - cp -Lf result/openwrt-*-friendlyarm_nanopi-r6s-ext4-sysupgrade.img.gz firmware/
+      - 'echo "Built firmware/$(basename result/openwrt-*-friendlyarm_nanopi-r6s-ext4-sysupgrade.img.gz)"'
+      - rm -f result

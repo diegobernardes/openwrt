@@ -11,7 +11,7 @@ All commands go through `task` (see `taskfile.yml`); the dev toolchain is pinned
 - `ROLE=<name> task apply` — apply a single role.
 - `TARGET=router|router_factory task apply` — skip auto-detection.
 - `task lint` — yamllint + ansible-lint.
-- `VERSION=<x.y.z> task firmware` — build a custom image via OpenWrt ASU.
+- `task firmware` — build a custom image locally via Nix (OpenWrt ImageBuilder). Release + package list are pinned in `flake.nix`.
 - `task vault` — edit `group_vars/all/vault.yml`.
 
 ## Layout
@@ -19,13 +19,13 @@ All commands go through `task` (see `taskfile.yml`); the dev toolchain is pinned
 - `roles/<name>/` — one role per concern. `detect` runs on localhost; the rest run on the `target_router` group populated by `detect`.
 - `group_vars/all/vars.yml` — single source of truth for VLANs, DHCP reservations, firewall rules, VPN, SQM, etc. **Most "config changes" mean editing this file, not a role.**
 - `group_vars/all/vault.yml` — encrypted secrets, referenced as `vault_*` from vars.
-- `firmware/` — pre-built OpenWrt sysupgrade images (`.img.gz`).
-- `scripts/firmware-build.sh` — ASU build with the package list baked in.
+- `firmware/` — built OpenWrt sysupgrade images (`.img.gz`).
+- `flake.nix` — dev toolchain, plus the firmware image: OpenWrt release (`openwrtRelease`) and baked package list (`openwrtPackages`) are pinned here and built via the `astro/nix-openwrt-imagebuilder` input (pinned in `flake.lock`). Binaries come from downloads.openwrt.org, hash-verified.
 
 ## Adding a package
 Packages are baked into the firmware image, **not installed at runtime**. To add one:
-1. Add it to the `PACKAGES` array in `scripts/firmware-build.sh` under the matching role comment.
-2. `VERSION=<x.y.z> task firmware` to rebuild, then flash or `sysupgrade`.
+1. Add it to the `openwrtPackages` list in `flake.nix` under the matching role comment.
+2. `task firmware` to rebuild, then flash or `sysupgrade`.
 
 Do not introduce `package:` / `opkg` tasks in roles.
 
@@ -38,4 +38,4 @@ Do not introduce `package:` / `opkg` tasks in roles.
 - The router runs OpenWrt; configuration is UCI files under `/etc/config/*` plus service-specific files. Prefer rendering UCI via templates over `uci set` shell calls.
 
 ## Shell
-User shell is **fish**. Documented snippets use fish syntax (e.g. `set -x VERSION 25.12.3`).
+User shell is **fish**. Documented snippets use fish syntax (e.g. `set -x FOO bar`).
