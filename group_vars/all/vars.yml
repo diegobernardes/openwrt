@@ -189,20 +189,12 @@ firewall_custom_rules:
     dest_port: "29810"
     proto: udp
 
-  - name: ap-to-omada-management
+  - name: ap-to-omada-tcp
     src: management
     src_ip: [172.31.10.3, 172.31.10.4, 172.31.10.5]
     dest: server
     dest_ip: 172.31.20.101
-    dest_port: "29811 29812 29813 29814 29815 29816 29817"
-    proto: tcp
-
-  - name: ap-to-omada-upgrade
-    src: management
-    src_ip: [172.31.10.3, 172.31.10.4, 172.31.10.5]
-    dest: server
-    dest_ip: 172.31.20.101
-    dest_port: "8043"
+    dest_port: "29811 29812 29813 29814 29815 29816 29817 8043"
     proto: tcp
 
   - name: server-to-air-quality-sensor
