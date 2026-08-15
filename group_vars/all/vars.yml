@@ -110,7 +110,7 @@ dhcp_static_hosts:
 
   - name: server
     mac: "{{ vault_mac_server }}"
-    ip: 172.31.20.2
+    ip: &server_ip 172.31.20.2
 
   - name: nas
     mac: "{{ vault_mac_nas }}"
