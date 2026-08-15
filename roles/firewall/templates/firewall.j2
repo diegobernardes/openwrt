@@ -329,12 +329,16 @@ config rule
 config rule
 	option name '{{ rule.name }}'
 	option src '{{ rule.src }}'
-{% for ip in rule.src_ip %}
+{% for ip in rule.src_ip | default([]) %}
 	list src_ip '{{ ip }}'
 {% endfor %}
 	option dest '{{ rule.dest }}'
+{% if rule.dest_ip is defined %}
 	option dest_ip '{{ rule.dest_ip }}'
+{% endif %}
+{% if rule.dest_port is defined %}
 	option dest_port '{{ rule.dest_port }}'
+{% endif %}
 	option proto '{{ rule.proto }}'
 	option target 'ACCEPT'
 

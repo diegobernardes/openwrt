@@ -121,6 +121,10 @@ dhcp_static_hosts:
     ip: 172.31.30.10
     bypass_adblock: true
 
+  - name: air_quality_sensor
+    mac: "{{ vault_mac_air_quality_sensor }}"
+    ip: &air_quality_sensor_ip 172.31.60.2
+
 adblock_unbound_list: /var/lib/unbound/adb_list.adblock-fast
 
 dns_adblock:
@@ -200,5 +204,19 @@ firewall_custom_rules:
     dest_ip: 172.31.20.101
     dest_port: "8043"
     proto: tcp
+
+  - name: server-to-air-quality-sensor
+    src: server
+    src_ip: [*server_ip]
+    dest: iot
+    dest_ip: *air_quality_sensor_ip
+    dest_port: "80"
+    proto: tcp
+
+  - name: air-quality-sensor-to-wan
+    src: iot
+    src_ip: [*air_quality_sensor_ip]
+    dest: wan
+    proto: all
 
 router_password: "{{ vault_router_password }}"
