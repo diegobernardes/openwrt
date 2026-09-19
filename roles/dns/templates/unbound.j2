@@ -60,6 +60,7 @@ config zone 'forward_dot'
 	option fallback '0'
 	option tls_upstream '1'
 	option tls_port '853'
-	option tls_index 'dns.quad9.net'
-	list server '9.9.9.9'
-	list server '149.112.112.112'
+	option tls_index '{{ dns_upstream.tls_index }}'
+{% for server in dns_upstream.servers %}
+	list server '{{ server }}'
+{% endfor %}

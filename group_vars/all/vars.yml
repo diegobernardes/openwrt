@@ -131,6 +131,12 @@ dns_adblock:
   blocklists:
     - https://cdn.jsdelivr.net/gh/StevenBlack/hosts/hosts
 
+dns_upstream:
+  tls_index: cloudflare-dns.com
+  servers:
+    - 1.1.1.1
+    - 1.0.0.1
+
 # Domains allowed to resolve to private (RFC1918) IPs, bypassing rebind
 # protection. Used for corporate domains reached through the VPN.
 dns_private_domains: "{{ vault_dns_private_domains }}"
@@ -151,8 +157,8 @@ system_zonename: "{{ vault_system_zonename }}"
 sqm_download: 950000 # 950 Mbit/s
 sqm_upload: 950000 # 950 Mbit/s
 
-connectivity_check_host_a: "9.9.9.9"
-connectivity_check_host_b: "149.112.112.112"
+connectivity_check_host_a: "1.1.1.1"
+connectivity_check_host_b: "8.8.8.8"
 
 watchdog_config:
   pingperiod: 30s
